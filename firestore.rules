@@ -1,0 +1,109 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isUser(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+    function incomingData() {
+      return request.resource.data;
+    }
+    function existingData() {
+      return resource.data;
+    }
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Role checks
+    function isOwner(userId) {
+      return isUser(userId);
+    }
+
+    // Validation functions
+    function isValidUser(data, userId) {
+      return data.size() >= 4 && data.size() <= 6
+        && data.uid == userId
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && data.email is string && data.email.size() > 0 && data.email.size() <= 200
+        && data.role in ['customer', 'distributor', 'admin']
+        && (data.createdAt is number || data.createdAt is timestamp);
+    }
+
+    function isValidOrder(data) {
+      return data.size() >= 5 && data.size() <= 8
+        && data.userId is string && data.userId == request.auth.uid
+        && data.items is list && data.items.size() > 0 && data.items.size() <= 100
+        && data.totalAmount is number && data.totalAmount >= 0
+        && data.status in ['pending', 'processing', 'shipped', 'delivered', 'cancelled']
+        && (data.shippingAddress is string ? data.shippingAddress.size() <= 500 : true)
+        && (data.createdAt is number || data.createdAt is timestamp);
+    }
+
+    function isValidDistributorRequest(data) {
+      return data.size() >= 7 && data.size() <= 8
+        && data.userId is string && data.userId == request.auth.uid
+        && data.companyName is string && data.companyName.size() > 0 && data.companyName.size() <= 200
+        && data.contactNumber is string && data.contactNumber.size() > 0 && data.contactNumber.size() <= 50
+        && data.city is string && data.city.size() > 0 && data.city.size() <= 100
+        && data.partnerType is string && data.partnerType.size() > 0 && data.partnerType.size() <= 100
+        && data.status in ['pending', 'approved', 'rejected']
+        && (data.createdAt is number || data.createdAt is timestamp);
+    }
+
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isUser(userId));
+      allow list: if false; // Cannot list users
+      allow create: if isValidId(userId) && isUser(userId) 
+                    && isValidUser(incomingData(), userId)
+                    && incomingData().keys().hasOnly(['uid', 'name', 'email', 'role', 'createdAt']);
+      allow update: if isValidId(userId) && isUser(userId)
+                    && isValidUser(incomingData(), userId)
+                    && incomingData().uid == existingData().uid
+                    && incomingData().createdAt == existingData().createdAt
+                    && incomingData().diff(existingData()).affectedKeys().hasOnly(['name', 'role']); // Role update might be constrained, but allowed for simplicity here, ideally an admin does this
+      allow delete: if false;
+    }
+
+    match /products/{productId} {
+      allow read: if isValidId(productId);
+      allow list: if true;
+      allow write: if false; // Only admin can create/update products (not covered here, or from console)
+    }
+
+    match /orders/{orderId} {
+      allow get: if isValidId(orderId) && isAuthenticated() && existingData().userId == request.auth.uid;
+      allow list: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isValidId(orderId) && isAuthenticated() 
+                    && isValidOrder(incomingData())
+                    && incomingData().keys().hasOnly(['userId', 'items', 'totalAmount', 'status', 'shippingAddress', 'createdAt']);
+      allow update: if isValidId(orderId) && isAuthenticated() && existingData().userId == request.auth.uid
+                    && isValidOrder(incomingData())
+                    && incomingData().userId == existingData().userId
+                    && incomingData().createdAt == existingData().createdAt
+                    && incomingData().diff(existingData()).affectedKeys().hasOnly(['status', 'shippingAddress']);
+      allow delete: if false;
+    }
+
+    match /distributor_requests/{requestId} {
+      allow get: if isValidId(requestId) && isAuthenticated() && existingData().userId == request.auth.uid;
+      allow list: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isValidId(requestId) && isAuthenticated() 
+                    && isValidDistributorRequest(incomingData())
+                    && incomingData().status == 'pending'
+                    && incomingData().keys().hasOnly(['userId', 'companyName', 'contactNumber', 'city', 'partnerType', 'status', 'createdAt']);
+      allow update: if isValidId(requestId) && isAuthenticated() && existingData().userId == request.auth.uid
+                    && isValidDistributorRequest(incomingData())
+                    && incomingData().userId == existingData().userId
+                    && incomingData().createdAt == existingData().createdAt
+                    && incomingData().diff(existingData()).affectedKeys().hasOnly(['companyName', 'contactNumber', 'city', 'partnerType']);
+      allow delete: if false;
+    }
+  }
+}

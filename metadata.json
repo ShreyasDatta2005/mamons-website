@@ -1,0 +1,6 @@
+{
+  "name": "Ministry of Nuts",
+  "description": "An ecommerce platform for premium healthy snacks including cashews, almonds, and jaggery powder.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

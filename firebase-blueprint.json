@@ -1,0 +1,82 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A user of the e-commerce platform",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["customer", "distributor", "admin"] },
+        "createdAt": { "type": "number", "description": "Timestamp" }
+      },
+      "required": ["uid", "name", "email", "role", "createdAt"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Product in the catalog",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "imageUrl": { "type": "string" },
+        "category": { "type": "string" },
+        "featured": { "type": "boolean" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["name", "price", "imageUrl", "createdAt"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Order made by a user",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "items": { 
+          "type": "array",
+          "items": { "type": "object" }
+        },
+        "totalAmount": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "processing", "shipped", "delivered", "cancelled"] },
+        "shippingAddress": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["userId", "items", "totalAmount", "status", "createdAt"]
+    },
+    "DistributorRequest": {
+      "title": "Distributor Request",
+      "description": "Application to become a distributor",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "companyName": { "type": "string" },
+        "contactNumber": { "type": "string" },
+        "city": { "type": "string" },
+        "partnerType": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["userId", "companyName", "contactNumber", "city", "partnerType", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Product catalog"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "User orders"
+    },
+    "/distributor_requests/{requestId}": {
+      "schema": "DistributorRequest",
+      "description": "Requests to join the distributor network"
+    }
+  }
+}
