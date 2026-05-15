@@ -10,6 +10,35 @@ export default function Home() {
   const featured = DUMMY_PRODUCTS.filter(p => p.featured);
   const [hoveredProduct, setHoveredProduct] = useState<Product | null>(null);
 
+  const heroSlides = [
+    {
+      id: "almonds",
+      title: "Premium Roasted Almonds",
+      subtitle: "Experience the crunch of ethically handpicked, perfectly roasted almonds.",
+      image: "/images/dashboard-almonds.jpg",
+      hash: "#almonds"
+    },
+    {
+      id: "cashews",
+      title: "Premium Roasted Cashews",
+      subtitle: "Finest quality cashews, gently roasted for the perfect healthy snack.",
+      image: "/images/dashboard-cashews.jpg",
+      hash: "#cashews"
+    },
+    {
+      id: "jaggery",
+      title: "Pure Jaggery Powder",
+      subtitle: "Unrefined sweetness. Natural sugarcane jaggery packed with minerals.",
+      image: "/images/dashboard-jaggery.jpg",
+      hash: "#jaggery"
+    }
+  ];
+
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+  const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
+
   return (
     <div className="flex flex-col flex-grow relative">
       <AnimatePresence>
@@ -36,30 +65,50 @@ export default function Home() {
       </AnimatePresence>
 
       {/* Hero Section */}
-      <section className="relative w-full h-[80vh] flex items-center p-8 lg:p-16 overflow-hidden bg-[#FDFBF7] text-[#3D3D3D]">
-        <div className="relative w-full h-full bg-[#E8E2D6] rounded-3xl overflow-hidden flex items-center p-8 lg:p-16">
-          <div className="z-10 max-w-xl">
-            <span className="text-[#A0522D] font-serif italic text-lg lg:text-xl">Summer Harvest 2026</span>
-            <h1 className="text-4xl md:text-5xl lg:text-7xl font-serif font-bold leading-tight mt-2 mb-4 text-[#2D3621]">
-              Pure. Roasted.<br/>Sustainably Sourced.
-            </h1>
-            <p className="text-sm md:text-base text-[#5C5C5C] leading-relaxed max-w-md pb-6">
-              Experience the crunch of ethically handpicked nuts and the warmth of unrefined jaggery.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link to="/shop" className="bg-[#556B2F] hover:bg-[#2D3621] text-white font-bold px-8 py-3 rounded-full text-xs uppercase tracking-widest inline-flex items-center justify-center transition-colors">
-                The Collection
-              </Link>
-              <Link to="/distributor" className="bg-white border border-[#E8E2D6] text-[#A0522D] hover:bg-[#F2EDE4] font-bold px-8 py-3 rounded-full text-xs uppercase tracking-widest inline-flex items-center justify-center transition-colors">
-                Distributor Hub
-              </Link>
-            </div>
-          </div>
-          <div className="absolute right-0 top-0 h-full w-1/2 lg:w-3/5 bg-[url('https://images.unsplash.com/photo-1596591606975-97ee5cef3a1e?auto=format&fit=crop&q=80&w=1200')] bg-cover opacity-20"></div>
+      <section className="relative w-full h-[80vh] flex items-center overflow-hidden bg-[#FDFBF7] text-[#3D3D3D]">
+        <AnimatePresence mode="wait">
+          <motion.div 
+            key={`bg-${currentSlide}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.7 }}
+            className="absolute inset-0 w-full h-full"
+          >
+            <img src={heroSlides[currentSlide].image} alt={heroSlides[currentSlide].title} className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#eaddd1]/95 via-[#eaddd1]/80 to-transparent"></div>
+          </motion.div>
+        </AnimatePresence>
+
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-8 lg:px-16 flex items-center h-full">
+          <AnimatePresence mode="wait">
+            <motion.div 
+              key={currentSlide}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.5 }}
+              className="max-w-xl flex flex-col justify-center h-full w-full"
+            >
+              <h1 className="text-5xl md:text-7xl lg:text-[5.5rem] font-serif font-bold leading-[1.05] mt-2 mb-6 text-[#2D3621]">
+                {heroSlides[currentSlide].title.split(' ').map((word, i) => (
+                  <span key={i} className="block">{word}</span>
+                ))}
+              </h1>
+              <p className="text-sm md:text-lg text-[#2D3621] leading-relaxed max-w-md pb-6 font-medium">
+                {heroSlides[currentSlide].subtitle}
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link to={`/shop${heroSlides[currentSlide].hash}`} className="bg-[#556B2F] hover:bg-[#2D3621] text-white font-bold px-10 py-4 rounded-full text-xs uppercase tracking-wider inline-flex items-center justify-center transition-colors shadow-lg shadow-[#556B2F]/20 w-max">
+                  The Collection
+                </Link>
+              </div>
+            </motion.div>
+          </AnimatePresence>
           
-          <div className="absolute right-8 bottom-8 lg:right-12 lg:bottom-12 flex gap-2 hidden md:flex">
-            <div className="w-12 h-12 rounded-full border border-[#556B2F] flex items-center justify-center text-[#556B2F]">←</div>
-            <div className="w-12 h-12 rounded-full bg-[#556B2F] flex items-center justify-center text-white">→</div>
+          <div className="absolute right-8 bottom-8 lg:right-12 lg:bottom-12 flex gap-4 hidden md:flex z-20">
+            <button onClick={prevSlide} className="w-14 h-14 rounded-full bg-white/60 hover:bg-white text-[#556B2F] flex items-center justify-center shadow-sm transition-all backdrop-blur-sm text-xl">←</button>
+            <button onClick={nextSlide} className="w-14 h-14 rounded-full bg-[#556B2F] hover:bg-[#2D3621] flex items-center justify-center text-white shadow-lg transition-all text-xl">→</button>
           </div>
         </div>
       </section>
